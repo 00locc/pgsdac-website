@@ -87,17 +87,37 @@
     </div>
   </section>
 
+  <!-- SERMONS PREVIEW — live from YouTube -->
   <section class="sermons-preview">
     <div class="container">
-      <div class="section-header reveal"><span class="section-eyebrow">The Word</span><h2 class="section-title">Recent Sermons</h2></div>
-      <div class="sermons-grid">
-        <div class="sermon-card reveal"><div class="sermon-thumb">✝️</div><div class="sermon-body"><span class="sermon-date">June 28, 2025</span><h3>Walking in the Light of His Word</h3><p>A message on the power of Scripture to guide and transform our daily lives.</p><a href="sermons.html">Watch Sermon →</a></div></div>
-        <div class="sermon-card reveal delay-1"><div class="sermon-thumb">🕊️</div><div class="sermon-body"><span class="sermon-date">June 21, 2025</span><h3>The Peace That Passes All Understanding</h3><p>Finding rest in God's promises during seasons of uncertainty.</p><a href="sermons.html">Watch Sermon →</a></div></div>
-        <div class="sermon-card reveal delay-2"><div class="sermon-thumb">🌅</div><div class="sermon-body"><span class="sermon-date">June 14, 2025</span><h3>The Blessed Hope: Christ's Return</h3><p>A study of the Second Coming and what it means for our lives today.</p><a href="sermons.html">Watch Sermon →</a></div></div>
+      <div class="section-header reveal">
+        <span class="section-eyebrow">The Word</span>
+        <h2 class="section-title">Recent Sermons</h2>
       </div>
-      <div class="center reveal" style="margin-top:2.25rem"><a href="sermons.html" class="btn btn-outline-dark">All Sermons</a></div>
+
+      <div class="sermons-grid" id="homeSermonGrid">
+        <!-- Loading spinner -->
+        <div style="grid-column:1/-1;text-align:center;padding:2.5rem 0;color:var(--text-light)">
+          <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue-light);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 0.75rem"></div>
+          <p>Loading sermons…</p>
+        </div>
+      </div>
+
+      <div class="center reveal" style="margin-top:2.25rem">
+        <a href="sermons.html" class="btn btn-outline-dark">All Sermons</a>
+      </div>
     </div>
   </section>
+
+  <!-- Modal for homepage sermon playback -->
+  <div id="homeYtModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+    <div style="width:100%;max-width:900px;background:#000;border-radius:16px;overflow:hidden;position:relative">
+      <button onclick="closeHomeModal()" style="position:absolute;top:0.6rem;right:0.6rem;background:rgba(255,255,255,0.15);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:0.9rem;cursor:pointer;z-index:2">✕</button>
+      <div style="position:relative;padding-top:56.25%">
+        <iframe id="homeYtFrame" src="" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" style="position:absolute;inset:0;width:100%;height:100%;border:none"></iframe>
+      </div>
+    </div>
+  </div>
 
   <section class="give-cta">
     <div class="container">
@@ -119,6 +139,78 @@
     </div></div></div>
     <div class="footer-bottom"><p>© 2025 Phoenix Ghanaian SDA Church · All rights reserved</p></div>
   </footer>
+
   <script src="main.js"></script>
+  <script>
+    // ── Homepage sermon preview — 3 latest from YouTube ──
+    const CHANNEL_ID = 'UC7iQgLxSD7F6KJFaPWcUeBg';
+    const RSS_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.youtube.com%2Ffeeds%2Fvideos.xml%3Fchannel_id%3D' + CHANNEL_ID;
+
+    function getVid(url) {
+      const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/);
+      return m ? m[1] : null;
+    }
+
+    function fmtDate(str) {
+      return new Date(str).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    }
+
+    function openHomeModal(id) {
+      var modal = document.getElementById('homeYtModal');
+      document.getElementById('homeYtFrame').src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0';
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeHomeModal() {
+      document.getElementById('homeYtFrame').src = '';
+      document.getElementById('homeYtModal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    // Close on backdrop click
+    document.getElementById('homeYtModal').addEventListener('click', function(e) {
+      if (e.target === this) closeHomeModal();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeHomeModal();
+    });
+
+    fetch(RSS_URL)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.items || !data.items.length) throw new Error('empty');
+
+        var items = data.items.slice(0, 3);
+        var grid = document.getElementById('homeSermonGrid');
+
+        grid.innerHTML = items.map(function(item, i) {
+          var vid = getVid(item.link);
+          var thumb = 'https://img.youtube.com/vi/' + vid + '/mqdefault.jpg';
+          var delay = i === 1 ? ' delay-1' : i === 2 ? ' delay-2' : '';
+          return '<div class="sermon-card reveal' + delay + '" onclick="openHomeModal(\'' + vid + '\')" style="cursor:pointer">'
+            + '<div class="sermon-thumb" style="position:relative;overflow:hidden;background:var(--navy)">'
+            + '<img src="' + thumb + '" alt="' + item.title + '" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy">'
+            + '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center">'
+            + '<span style="width:44px;height:44px;background:rgba(255,255,255,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--navy)">▶</span>'
+            + '</div></div>'
+            + '<div class="sermon-body">'
+            + '<span class="sermon-date">' + fmtDate(item.pubDate) + '</span>'
+            + '<h3 style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + item.title + '</h3>'
+            + '<a href="#" onclick="openHomeModal(\'' + vid + '\');return false;">Watch Sermon →</a>'
+            + '</div></div>';
+        }).join('');
+
+        // Observe new cards for reveal animation
+        grid.querySelectorAll('.reveal').forEach(function(el) {
+          revealObserver && revealObserver.observe(el);
+        });
+      })
+      .catch(function() {
+        // Fallback to static cards if RSS fails
+        document.getElementById('homeSermonGrid').innerHTML =
+          '<div class="sermon-card reveal"><div class="sermon-thumb">✝️</div><div class="sermon-body"><span class="sermon-date">Latest Sermon</span><h3>Watch Our Latest Messages</h3><p>Visit our YouTube channel to watch all our sermons and worship services.</p><a href="sermons.html">Watch Sermons →</a></div></div>';
+      });
+  </script>
 </body>
 </html>
