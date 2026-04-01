@@ -1,2 +1,2 @@
-// This file copies the logo - replace src with: images/logo.png
-// Logo must be placed at: phoenix-ghanaian-sda/images/logo.png
+// This file copies the logo - replace src with: logo.png
+// Logo must be placed at: phoenix-ghanaian-sda/logo.png
