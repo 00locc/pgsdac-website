@@ -7,30 +7,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <style>
-    .yt-embed-section { background: var(--off-white); }
+    /* ── Sermons Page ───────────────────────── */
+    .sermons-section { background: var(--off-white); }
 
-    /* Channel banner embed */
-    .yt-channel-embed {
+    /* Featured latest video */
+    .sermon-featured {
       background: var(--white);
       border-radius: var(--radius-lg);
       overflow: hidden;
       box-shadow: var(--shadow-lg);
       border: 1px solid var(--border);
-      margin-bottom: 3rem;
+      margin-bottom: 3.5rem;
     }
-    .yt-channel-embed-frame {
+    .sermon-featured-embed {
       position: relative;
       padding-top: 56.25%;
     }
-    .yt-channel-embed-frame iframe {
+    .sermon-featured-embed iframe {
       position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0; width: 100%; height: 100%;
       border: none;
     }
-    .yt-channel-embed-footer {
-      padding: 1.5rem 2rem;
+    .sermon-featured-info {
+      padding: 1.6rem 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -38,14 +37,154 @@
       gap: 1rem;
       border-top: 1px solid var(--border);
     }
-    .yt-channel-embed-footer p {
-      font-size: 0.92rem;
+    .sermon-featured-info p {
+      font-size: 0.9rem;
       color: var(--text-light);
     }
-    .yt-channel-embed-footer strong {
+    .sermon-featured-info strong { color: var(--navy); }
+
+    /* Sermon cards grid */
+    .sermons-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .sermon-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .sermon-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--blue-light);
+    }
+    .sermon-thumb {
+      position: relative;
+      height: 0;
+      padding-top: 56.25%;
+      background: var(--navy);
+      overflow: hidden;
+    }
+    .sermon-thumb img {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .sermon-card:hover .sermon-thumb img { transform: scale(1.04); }
+    .sermon-play-btn {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.2);
+      transition: background 0.2s;
+    }
+    .sermon-card:hover .sermon-play-btn { background: rgba(0,0,0,0.35); }
+    .sermon-play-btn span {
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.92);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
       color: var(--navy);
+      transform: scale(0.9);
+      transition: transform 0.2s;
+    }
+    .sermon-card:hover .sermon-play-btn span { transform: scale(1); }
+    .sermon-card-body { padding: 1.25rem; }
+    .sermon-card-date {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--blue-light);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .sermon-card-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--navy);
+      line-height: 1.4;
+      margin-bottom: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
+    /* Loading spinner */
+    .yt-loading {
+      text-align: center;
+      padding: 4rem 0;
+      color: var(--text-light);
+      grid-column: 1 / -1;
+    }
+    .yt-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue-light);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Video modal */
+    .yt-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .yt-modal.open { display: flex; }
+    .yt-modal-inner {
+      width: 100%;
+      max-width: 900px;
+      background: #000;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+    }
+    .yt-modal-close {
+      position: absolute;
+      top: 0.6rem; right: 0.6rem;
+      background: rgba(255,255,255,0.15);
+      border: none; color: white;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      cursor: pointer;
+      z-index: 2;
+      transition: background 0.2s;
+    }
+    .yt-modal-close:hover { background: rgba(255,255,255,0.3); }
+    .yt-modal-embed {
+      position: relative;
+      padding-top: 56.25%;
+    }
+    .yt-modal-embed iframe {
+      position: absolute;
+      inset: 0; width: 100%; height: 100%;
+      border: none;
+    }
+
+    /* YouTube subscribe button */
     .yt-channel-btn {
       display: inline-flex;
       align-items: center;
@@ -58,7 +197,6 @@
       font-size: 0.88rem;
       transition: all 0.2s ease;
       text-decoration: none;
-      white-space: nowrap;
     }
     .yt-channel-btn:hover {
       background: #cc0000;
@@ -66,77 +204,13 @@
       box-shadow: 0 6px 20px rgba(255,0,0,0.3);
     }
 
-    /* Recent sermons grid - static cards linking to YouTube */
-    .sermon-card .sermon-thumb {
-      position: relative;
-      height: 110px;
-      background: linear-gradient(135deg, var(--navy), var(--blue));
-      overflow: hidden;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    @media (max-width: 900px) {
+      .sermons-grid { grid-template-columns: repeat(2, 1fr); }
     }
-    .sermon-card .sermon-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      position: absolute;
-      inset: 0;
+    @media (max-width: 600px) {
+      .sermons-grid { grid-template-columns: 1fr; }
+      .sermon-featured-info { flex-direction: column; align-items: flex-start; }
     }
-    .sermon-card .sermon-thumb .play-btn {
-      position: relative;
-      z-index: 1;
-      width: 44px; height: 44px;
-      background: rgba(255,255,255,0.9);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      color: var(--navy);
-      transition: transform 0.2s;
-    }
-    .sermon-card:hover .play-btn { transform: scale(1.15); }
-    .sermon-card .sermon-thumb .thumb-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.25);
-    }
-
-    /* Subscribe CTA */
-    .yt-subscribe-cta {
-      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
-      border-radius: var(--radius-lg);
-      padding: 2.5rem;
-      text-align: center;
-      color: white;
-      margin-top: 3rem;
-    }
-    .yt-subscribe-cta h3 {
-      font-family: var(--font-display);
-      font-size: 1.6rem;
-      margin-bottom: 0.75rem;
-    }
-    .yt-subscribe-cta p {
-      opacity: 0.9;
-      margin-bottom: 1.5rem;
-      font-size: 0.95rem;
-    }
-    .yt-subscribe-cta a {
-      background: white;
-      color: #cc0000;
-      padding: 0.75rem 1.75rem;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.92rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-    .yt-subscribe-cta a:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
   </style>
 </head>
 <body>
@@ -161,57 +235,60 @@
   <section class="page-hero">
     <span class="hero-eyebrow animate-up delay-1">The Word</span>
     <h1 class="hero-title animate-up delay-2">Sermons & Messages</h1>
-    <p class="hero-sub animate-up delay-3">Be fed by the Word of God. Watch our latest messages live from our YouTube channel.</p>
+    <p class="hero-sub animate-up delay-3">Be fed by the Word of God. Watch our latest messages directly from our YouTube channel.</p>
   </section>
 
-  <section class="yt-embed-section">
+  <section class="sermons-section">
     <div class="container">
 
-      <!-- Latest video embed using YouTube channel embed -->
+      <!-- Latest sermon featured embed -->
       <div class="section-header reveal">
-        <span class="section-eyebrow">Watch Live & On Demand</span>
-        <h2 class="section-title">Our YouTube Channel</h2>
-        <p class="section-body">Our latest sermons, worship services, and special programs — all in one place. New videos added every week.</p>
+        <span class="section-eyebrow">Latest Message</span>
+        <h2 class="section-title">Most Recent Sermon</h2>
       </div>
 
-      <div class="yt-channel-embed reveal">
-        <div class="yt-channel-embed-frame">
-          <!-- Embeds the latest video from the channel automatically -->
-          <iframe
-            src="https://www.youtube.com/embed?listType=user_uploads&list=phoenixghanaiansdachurch3531&rel=0&modestbranding=1"
-            title="Phoenix Ghanaian SDA Church Sermons"
-            allowfullscreen
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-          </iframe>
-        </div>
-        <div class="yt-channel-embed-footer">
-          <p><strong>Phoenix Ghanaian SDA Church</strong> · New sermons every Saturday</p>
-          <a href="https://www.youtube.com/@phoenixghanaiansdachurch3531" target="_blank" class="yt-channel-btn">
-            <svg width="18" height="13" viewBox="0 0 20 14" fill="currentColor"><path d="M19.582 2.186A2.506 2.506 0 0 0 17.824.418C16.254 0 10 0 10 0S3.746 0 2.176.418A2.506 2.506 0 0 0 .418 2.186C0 3.76 0 7 0 7s0 3.24.418 4.814a2.506 2.506 0 0 0 1.758 1.768C3.746 14 10 14 10 14s6.254 0 7.824-.418a2.506 2.506 0 0 0 1.758-1.768C20 10.24 20 7 20 7s0-3.24-.418-4.814zM8 10V4l5.2 3L8 10z"/></svg>
-            Open on YouTube
-          </a>
+      <div class="sermon-featured reveal" id="featuredSermon">
+        <div class="yt-loading" style="padding:3rem">
+          <div class="yt-spinner"></div>
+          <p>Loading latest sermon…</p>
         </div>
       </div>
 
-      <!-- How to find more sermons -->
-      <div class="section-header reveal" style="margin-top:3rem">
-        <span class="section-eyebrow">Previous Messages</span>
-        <h2 class="section-title">Browse All Sermons</h2>
-        <p class="section-body">Our full archive of sermons is available on our YouTube channel. Subscribe to get notified when new messages are posted.</p>
+      <!-- Recent sermons grid -->
+      <div class="section-header reveal">
+        <span class="section-eyebrow">Recent Messages</span>
+        <h2 class="section-title">Latest Sermons</h2>
       </div>
 
-      <!-- Subscribe CTA -->
-      <div class="yt-subscribe-cta reveal">
-        <h3>Never Miss a Sermon</h3>
-        <p>Subscribe to our YouTube channel and get notified every time we post a new message, worship service, or special program.</p>
-        <a href="https://www.youtube.com/@phoenixghanaiansdachurch3531?sub_confirmation=1" target="_blank">
-          <svg width="20" height="14" viewBox="0 0 20 14" fill="currentColor"><path d="M19.582 2.186A2.506 2.506 0 0 0 17.824.418C16.254 0 10 0 10 0S3.746 0 2.176.418A2.506 2.506 0 0 0 .418 2.186C0 3.76 0 7 0 7s0 3.24.418 4.814a2.506 2.506 0 0 0 1.758 1.768C3.746 14 10 14 10 14s6.254 0 7.824-.418a2.506 2.506 0 0 0 1.758-1.768C20 10.24 20 7 20 7s0-3.24-.418-4.814zM8 10V4l5.2 3L8 10z"/></svg>
-          Subscribe on YouTube
+      <div class="sermons-grid" id="sermonsGrid">
+        <div class="yt-loading">
+          <div class="yt-spinner"></div>
+          <p>Loading sermons…</p>
+        </div>
+      </div>
+
+      <!-- View all on YouTube -->
+      <div class="center reveal" style="margin-top:1rem">
+        <a href="https://www.youtube.com/@phoenixghanaiansdachurch3531" target="_blank" class="yt-channel-btn">
+          <svg width="18" height="13" viewBox="0 0 20 14" fill="currentColor"><path d="M19.582 2.186A2.506 2.506 0 0 0 17.824.418C16.254 0 10 0 10 0S3.746 0 2.176.418A2.506 2.506 0 0 0 .418 2.186C0 3.76 0 7 0 7s0 3.24.418 4.814a2.506 2.506 0 0 0 1.758 1.768C3.746 14 10 14 10 14s6.254 0 7.824-.418a2.506 2.506 0 0 0 1.758-1.768C20 10.24 20 7 20 7s0-3.24-.418-4.814zM8 10V4l5.2 3L8 10z"/></svg>
+          View All Sermons on YouTube
         </a>
       </div>
 
     </div>
   </section>
+
+  <!-- Video modal -->
+  <div class="yt-modal" id="ytModal">
+    <div class="yt-modal-inner">
+      <button class="yt-modal-close" onclick="closeModal()">✕</button>
+      <div class="yt-modal-embed">
+        <iframe id="ytModalFrame" src="" allowfullscreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+        </iframe>
+      </div>
+    </div>
+  </div>
 
   <footer class="footer">
     <div class="footer-main"><div class="container"><div class="footer-grid">
@@ -224,6 +301,108 @@
   </footer>
 
   <script src="main.js"></script>
+  <script>
+    const CHANNEL_ID = 'UC7iQgLxSD7F6KJFaPWcUeBg';
+    const RSS = `https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.youtube.com%2Ffeeds%2Fvideos.xml%3Fchannel_id%3D${CHANNEL_ID}`;
+
+    function getVideoId(url) {
+      const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/);
+      return m ? m[1] : null;
+    }
+
+    function formatDate(str) {
+      return new Date(str).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    }
+
+    function openModal(id) {
+      document.getElementById('ytModalFrame').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+      document.getElementById('ytModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('ytModalFrame').src = '';
+      document.getElementById('ytModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('ytModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    async function loadSermons() {
+      try {
+        const res = await fetch(RSS);
+        const data = await res.json();
+        if (!data.items || !data.items.length) throw new Error('empty');
+
+        const featured = data.items[0];
+        const rest = data.items.slice(1, 7);
+        const featuredId = getVideoId(featured.link);
+
+        // Render featured
+        document.getElementById('featuredSermon').innerHTML = `
+          <div class="sermon-featured-embed">
+            <iframe src="https://www.youtube.com/embed/${featuredId}?rel=0&modestbranding=1"
+              title="${featured.title}" allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+            </iframe>
+          </div>
+          <div class="sermon-featured-info">
+            <p><strong>${featured.title}</strong> &nbsp;·&nbsp; ${formatDate(featured.pubDate)}</p>
+            <a href="${featured.link}" target="_blank" class="yt-channel-btn" style="font-size:0.82rem;padding:0.5rem 1.1rem">
+              Watch on YouTube
+            </a>
+          </div>
+        `;
+
+        // Render grid
+        if (!rest.length) {
+          document.getElementById('sermonsGrid').innerHTML =
+            '<p style="color:var(--text-light);text-align:center;grid-column:1/-1;padding:2rem">More sermons coming soon.</p>';
+          return;
+        }
+
+        document.getElementById('sermonsGrid').innerHTML = rest.map((item, i) => {
+          const vid = getVideoId(item.link);
+          const thumb = `https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
+          const delay = i % 3 === 1 ? ' delay-1' : i % 3 === 2 ? ' delay-2' : '';
+          return `
+            <div class="sermon-card reveal${delay}" onclick="openModal('${vid}')">
+              <div class="sermon-thumb">
+                <img src="${thumb}" alt="${item.title}" loading="lazy">
+                <div class="sermon-play-btn"><span>▶</span></div>
+              </div>
+              <div class="sermon-card-body">
+                <span class="sermon-card-date">${formatDate(item.pubDate)}</span>
+                <h3 class="sermon-card-title">${item.title}</h3>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Observe new cards for reveal animation
+        document.querySelectorAll('#sermonsGrid .reveal').forEach(el => {
+          revealObserver && revealObserver.observe(el);
+        });
+
+      } catch(e) {
+        // Fallback — show direct YouTube link
+        document.getElementById('featuredSermon').innerHTML = `
+          <div style="padding:2.5rem;text-align:center">
+            <p style="color:var(--text-light);margin-bottom:1.25rem">Watch our sermons live on YouTube.</p>
+            <a href="https://www.youtube.com/@phoenixghanaiansdachurch3531" target="_blank" class="yt-channel-btn">
+              <svg width="18" height="13" viewBox="0 0 20 14" fill="currentColor"><path d="M19.582 2.186A2.506 2.506 0 0 0 17.824.418C16.254 0 10 0 10 0S3.746 0 2.176.418A2.506 2.506 0 0 0 .418 2.186C0 3.76 0 7 0 7s0 3.24.418 4.814a2.506 2.506 0 0 0 1.758 1.768C3.746 14 10 14 10 14s6.254 0 7.824-.418a2.506 2.506 0 0 0 1.758-1.768C20 10.24 20 7 20 7s0-3.24-.418-4.814zM8 10V4l5.2 3L8 10z"/></svg>
+              Visit Our YouTube Channel
+            </a>
+          </div>
+        `;
+        document.getElementById('sermonsGrid').innerHTML = '';
+      }
+    }
+
+    loadSermons();
+  </script>
 </body>
 </html>
-
