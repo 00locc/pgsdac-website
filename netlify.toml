@@ -1,8 +1,40 @@
-# Netlify configuration for Phoenix Ghanaian SDA Church website
+[build]
+  publish = "."
+  functions = "netlify/functions"
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/about"
+  to = "/about.html"
+  status = 200
+
+[[redirects]]
+  from = "/sermons"
+  to = "/sermons.html"
+  status = 200
+
+[[redirects]]
+  from = "/ministries"
+  to = "/ministries.html"
+  status = 200
+
+[[redirects]]
+  from = "/events"
+  to = "/events.html"
+  status = 200
+
+[[redirects]]
+  from = "/give"
+  to = "/give.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact.html"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/login.html"
   status = 200
 
 [[headers]]

@@ -1,23 +1,42 @@
-// Give page — saves donation records to Supabase
+// give.js — Stripe payment integration
+// REPLACE the placeholder below with your actual Stripe TEST publishable key
+// Get it from: https://dashboard.stripe.com/test/apikeys
+// It starts with pk_test_...
 
-function getSupabase() {
-  return new Promise((resolve, reject) => {
-    if (window._supabase) return resolve(window._supabase);
-    let attempts = 0;
-    const interval = setInterval(() => {
-      attempts++;
-      if (window._supabase) { clearInterval(interval); resolve(window._supabase); }
-      else if (attempts > 50) { clearInterval(interval); reject(new Error('Could not connect. Please refresh and try again.')); }
-    }, 100);
-  });
-}
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51THDs8E5PnPIqw0MwGIgTcA0px9yuEnCEGQtwCTMd7kdS4IyHv6C8AgTnNB6RC80whS76qLePazfanrWryfiq7HA00dEwiUWxM';
 
-let selectedFund = 'tithe', selectedAmount = 100, selectedFreq = 'once';
+// ── Stripe setup ──────────────────────────────
+const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+const elements = stripe.elements();
+
+const cardElement = elements.create('card', {
+  style: {
+    base: {
+      fontFamily: '"DM Sans", sans-serif',
+      fontSize: '15px',
+      color: '#1a2340',
+      '::placeholder': { color: '#9ca3af' }
+    },
+    invalid: { color: '#e53e3e' }
+  }
+});
+cardElement.mount('#card-element');
+
+// Show card validation errors in real time
+cardElement.on('change', ({ error }) => {
+  document.getElementById('card-errors').textContent = error ? error.message : '';
+});
+
+// ── State ─────────────────────────────────────
+let selectedFund = 'tithe';
+let selectedAmount = 100;
+let selectedFreq = 'once';
 
 document.querySelectorAll('.fund-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.fund-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active'); selectedFund = btn.dataset.fund;
+    btn.classList.add('active');
+    selectedFund = btn.dataset.fund;
   });
 });
 
@@ -26,54 +45,109 @@ document.querySelectorAll('.amount-btn').forEach(btn => {
     document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     if (btn.classList.contains('custom')) {
-      document.getElementById('customAmountWrap').style.display = 'flex'; selectedAmount = null;
+      document.getElementById('customAmountWrap').style.display = 'flex';
+      selectedAmount = null;
     } else {
-      document.getElementById('customAmountWrap').style.display = 'none'; selectedAmount = parseInt(btn.dataset.amount);
+      document.getElementById('customAmountWrap').style.display = 'none';
+      selectedAmount = parseInt(btn.dataset.amount);
     }
   });
 });
 
-document.getElementById('customAmount')?.addEventListener('input', e => { selectedAmount = parseFloat(e.target.value) || 0; });
+document.getElementById('customAmount')?.addEventListener('input', e => {
+  selectedAmount = parseFloat(e.target.value) || 0;
+});
 
 document.querySelectorAll('.freq-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.freq-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active'); selectedFreq = btn.dataset.freq;
+    btn.classList.add('active');
+    selectedFreq = btn.dataset.freq;
   });
 });
 
+// ── Handle payment ────────────────────────────
 async function handleGive() {
   const firstName = document.getElementById('firstName')?.value.trim();
-  const lastName  = document.getElementById('lastName')?.value.trim();
-  const email     = document.getElementById('donorEmail')?.value.trim();
+  const lastName = document.getElementById('lastName')?.value.trim();
+  const email = document.getElementById('donorEmail')?.value.trim();
 
-  if (!firstName || !lastName || !email) { showGiveMsg('Please fill in your name and email.', 'error'); return; }
-  if (!selectedAmount || selectedAmount <= 0) { showGiveMsg('Please select or enter a valid amount.', 'error'); return; }
+  // Basic validation
+  if (!firstName || !lastName) { showMsg('Please enter your first and last name.', 'error'); return; }
+  if (!email || !email.includes('@')) { showMsg('Please enter a valid email address.', 'error'); return; }
+  if (!selectedAmount || selectedAmount < 1) { showMsg('Please select or enter a valid amount.', 'error'); return; }
 
   const btn = document.getElementById('giveBtn');
-  btn.textContent = 'Processing…'; btn.disabled = true;
+  btn.textContent = 'Processing…';
+  btn.disabled = true;
+  showMsg('', '');
 
   try {
-    const db = await getSupabase();
-    const { error } = await db.from('donations').insert([{
-      first_name: firstName, last_name: lastName, email,
-      amount: selectedAmount, fund: selectedFund, frequency: selectedFreq, status: 'pending'
-    }]);
-    if (error) throw error;
-    showGiveMsg(`✅ Thank you, ${firstName}! Your gift of $${selectedAmount} to the ${selectedFund} fund has been recorded.`, 'success');
-  } catch (e) {
-    showGiveMsg('Something went wrong: ' + e.message, 'error');
-  }
+    // Step 1: Ask our Netlify Function to create a PaymentIntent
+    const res = await fetch('/.netlify/functions/create-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: selectedAmount,
+        currency: 'usd',
+        fund: selectedFund,
+        frequency: selectedFreq,
+        firstName, lastName, email
+      })
+    });
 
-  btn.textContent = 'Submit Gift'; btn.disabled = false;
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'Payment setup failed.');
+
+    // Step 2: Confirm the card payment with Stripe
+    const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: { name: `${firstName} ${lastName}`, email }
+      }
+    });
+
+    if (stripeError) throw new Error(stripeError.message);
+
+    // Step 3: Payment succeeded — save record to Supabase
+    if (paymentIntent.status === 'succeeded') {
+      try {
+        if (window._supabase) {
+          await window._supabase.from('donations').insert([{
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            amount: selectedAmount,
+            fund: selectedFund,
+            frequency: selectedFreq,
+            status: 'paid',
+            stripe_payment_id: paymentIntent.id
+          }]);
+        }
+      } catch (dbErr) {
+        console.warn('Supabase save failed (payment still succeeded):', dbErr);
+      }
+
+      // Show success and redirect to thank you page
+      showMsg(`✅ Thank you, ${firstName}! Your gift of $${selectedAmount} has been received. Redirecting…`, 'success');
+      setTimeout(() => {
+        window.location.href = `give-success.html?name=${encodeURIComponent(firstName)}&amount=${selectedAmount}&fund=${encodeURIComponent(selectedFund)}`;
+      }, 2000);
+    }
+
+  } catch (err) {
+    showMsg('Payment failed: ' + err.message, 'error');
+    btn.textContent = 'Give Now';
+    btn.disabled = false;
+  }
 }
 
-function showGiveMsg(msg, type) {
-  let el = document.getElementById('giveMessage');
-  if (!el) { el = document.createElement('div'); el.id = 'giveMessage'; document.getElementById('giveBtn').after(el); }
-  el.style.cssText = `margin-top:1rem;padding:.85rem 1.1rem;border-radius:8px;font-size:.9rem;text-align:center;
-    ${type === 'success' ? 'background:#e8f5ee;border:1px solid #b2dfc4;color:#1a6b42;' : 'background:#fdecea;border:1px solid #f5c6cb;color:#9b1c1c;'}`;
+function showMsg(msg, type) {
+  const el = document.getElementById('giveMessage');
+  if (!el) return;
   el.textContent = msg;
+  el.className = 'give-message' + (type ? ' ' + type : '');
+  el.style.display = msg ? 'block' : 'none';
 }
 
 window.handleGive = handleGive;
